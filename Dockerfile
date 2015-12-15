@@ -6,12 +6,13 @@ ENV LANG       en_US.UTF-8
 ENV LC_ALL     en_US.UTF-8
 
 
-
 ENV DEBIAN_FRONTEND noninteractive
+
 RUN apt-get update
-RUN apt-get install -y --force-yes \
+RUN apt-get install -y \
 	php5-cli php5-fpm php5-mysql php5-pgsql php5-sqlite php5-curl \
-	php5-gd php5-mcrypt php5-intl php5-imap php5-tidy php5-memcache \
+	php5-gd php5-mcrypt php5-intl php5-imap php5-tidy php5-memcache
+RUN apt-get install -y \
 	nginx \
 	memcached \
 	mysql-server mysql-client \
@@ -43,9 +44,10 @@ ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 ADD phinx.php /etc/phinx.php
 ADD migrate.sh /usr/local/bin/migrate.sh
+ADD run.sh /usr/local/bin/run.sh
 
 EXPOSE 80
 EXPOSE 3306
 
-CMD ["/usr/bin/supervisord"]
+CMD ["/usr/local/bin/run.sh"]
 
