@@ -1,5 +1,11 @@
 #!/bin/bash
 
+function shut_down() {
+    pkill -SIGTERM supervisord
+	exit
+}
+
+trap "shut_down" SIGKILL SIGTERM SIGHUP SIGINT EXIT
 
 
 if test "$DOC_ROOT" != ""; then
@@ -8,4 +14,5 @@ if test "$DOC_ROOT" != ""; then
 fi
 
 
-/usr/bin/supervisord
+/usr/bin/supervisord &
+wait
