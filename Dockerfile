@@ -53,8 +53,8 @@ RUN apt-get install -y rabbitmq-server
 RUN rabbitmq-plugins enable rabbitmq_management
 
 # chinchilla
-ADD https://drone.io/github.com/benschw/chinchilla/files/chinchilla.gz /bin/chinchilla
-RUN chmod 755 /bin/chinchilla
+ADD https://drone.io/github.com/benschw/chinchilla/files/chinchilla.gz /tmp/chinchilla.gz
+RUN cd /tmp && gunzip chinchilla.gz && chmod 755 chinchilla && mv chinchilla /bin/chinchilla
 
 
 # configure
