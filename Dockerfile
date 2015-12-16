@@ -40,6 +40,24 @@ RUN /usr/sbin/mysqld & \
 	echo "GRANT ALL ON *.* TO admin@'%' IDENTIFIED BY 'changeme' WITH GRANT OPTION; FLUSH PRIVILEGES" | mysql
 RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
+# consul
+RUN apt-get install -y unzip
+ADD https://releases.hashicorp.com/consul/0.6.0/consul_0.6.0_linux_amd64.zip /tmp/consul.zip
+RUN cd /tmp && unzip consul.zip && chmod 755 consul && mv consul /bin/consul && rm consul.zip
+
+ADD https://releases.hashicorp.com/consul/0.6.0/consul_0.6.0_web_ui.zip /tmp/webui.zip
+RUN mkdir /ui && cd /ui && unzip /tmp/webui.zip && rm /tmp/webui.zip
+
+# rabbitmq
+RUN apt-get install -y rabbitmq-server
+RUN rabbitmq-plugins enable rabbitmq_management
+
+# chinchilla
+ADD https://drone.io/github.com/benschw/chinchilla/files/chinchilla.gz /bin/chinchilla
+RUN chmod 755 /bin/chinchilla
+
+
+# configure
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 ADD phinx.php /etc/phinx.php
@@ -48,6 +66,8 @@ ADD run.sh /usr/local/bin/run.sh
 
 EXPOSE 80
 EXPOSE 3306
+EXPOSE 8500
+EXPOSE 15672
 
 CMD ["/usr/local/bin/run.sh"]
 
