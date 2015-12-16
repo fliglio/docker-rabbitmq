@@ -14,5 +14,9 @@ if test "$DOC_ROOT" != ""; then
 fi
 
 
+
 /usr/bin/supervisord &
+
+
+
 wait

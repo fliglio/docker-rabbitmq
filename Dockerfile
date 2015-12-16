@@ -53,9 +53,11 @@ RUN apt-get install -y rabbitmq-server
 RUN rabbitmq-plugins enable rabbitmq_management
 
 # chinchilla
+RUN apt-get install -y curl
 ADD https://drone.io/github.com/benschw/chinchilla/files/chinchilla.gz /tmp/chinchilla.gz
 RUN cd /tmp && gunzip chinchilla.gz && chmod 755 chinchilla && mv chinchilla /bin/chinchilla
 
+ADD configure-chinchilla.sh /tmp/configure-chinchilla.sh
 
 # configure
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
