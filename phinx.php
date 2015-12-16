@@ -4,7 +4,7 @@
 
      return array(
          "paths" => array(
-             "migrations" => "/var/www/db/migrations"
+             "migrations" => getenv('PATH')
          ),
          "environments" => array(
              "default_migration_table" => "phinxlog",
