@@ -1,32 +1,42 @@
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 
 # Ensure UTF-8
+RUN apt-get clean && apt-get update && apt-get install -y locales
 RUN locale-gen en_US.UTF-8
 ENV LANG       en_US.UTF-8
 ENV LC_ALL     en_US.UTF-8
 
-
 ENV DEBIAN_FRONTEND noninteractive
 
+RUN apt-get purge `dpkg -l | grep php| awk '{print $2}' |tr "\n" " "`
 RUN apt-get update
+
+RUN apt-get -y install python-software-properties
+RUN apt-get -y install software-properties-common
+RUN add-apt-repository ppa:ondrej/php
+RUN apt-get update
+
+RUN apt-get install -y php5.6
+
 RUN apt-get install -y \
-	php5-cli php5-fpm php5-mysql php5-pgsql php5-sqlite php5-curl \
-	php5-gd php5-mcrypt php5-intl php5-imap php5-tidy php5-memcache
+	php5.6-cli php5.6-fpm php5.6-mysql php5.6-pgsql php5.6-sqlite php5.6-curl \
+	php5.6-gd php5.6-mcrypt php5.6-intl php5.6-imap php5.6-tidy php5.6-memcache \
+	php5.6-dom
 RUN apt-get install -y \
 	nginx \
 	memcached \
 	mysql-server mysql-client \
 	supervisor
 
-RUN sed -i "s/;date.timezone =.*/date.timezone = UTC/" /etc/php5/fpm/php.ini
-RUN sed -i "s/;date.timezone =.*/date.timezone = UTC/" /etc/php5/cli/php.ini
+RUN sed -i "s/;date.timezone =.*/date.timezone = UTC/" /etc/php/5.6/fpm/php.ini
+RUN sed -i "s/;date.timezone =.*/date.timezone = UTC/" /etc/php/5.6/cli/php.ini
 
 RUN mkdir -p /var/log/supervisor
 RUN mkdir -p /var/www
 
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
-RUN sed -i -e "s/;daemonize\s*=\s*yes/daemonize = no/g" /etc/php5/fpm/php-fpm.conf
-RUN sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php5/fpm/php.ini
+RUN sed -i -e "s/;daemonize\s*=\s*yes/daemonize = no/g" /etc/php/5.6/fpm/php-fpm.conf
+RUN sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/5.6/fpm/php.ini
  
 ADD nginx-site   /etc/nginx/sites-available/default
 
@@ -34,11 +44,13 @@ ADD nginx-site   /etc/nginx/sites-available/default
 RUN ln -sf /dev/stdout /var/log/nginx/access.log
 RUN ln -sf /dev/stdout /var/log/nginx/error.log
 
+# RUN touch -c -a {}
+# RUN service mysql start
 
-RUN /usr/sbin/mysqld & \
-	sleep 10s &&\
-	echo "GRANT ALL ON *.* TO admin@'%' IDENTIFIED BY 'changeme' WITH GRANT OPTION; FLUSH PRIVILEGES" | mysql
-RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+# RUN /usr/sbin/mysqld & \
+# 	sleep 10s &&\
+# 	echo "GRANT ALL ON *.* TO admin@'%' IDENTIFIED BY 'changeme' WITH GRANT OPTION; FLUSH PRIVILEGES" | mysql
+# RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
 # consul
 RUN apt-get install -y unzip
@@ -53,9 +65,10 @@ RUN apt-get install -y rabbitmq-server
 RUN rabbitmq-plugins enable rabbitmq_management
 
 # chinchilla
+RUN apt-get install unzip
 RUN apt-get install -y curl
-ADD https://drone.io/github.com/benschw/chinchilla/files/chinchilla.gz /tmp/chinchilla.gz
-RUN cd /tmp && gunzip chinchilla.gz && chmod 755 chinchilla && mv chinchilla /bin/chinchilla
+ADD http://www.chaoticharmony.net/chinchilla/chinchilla-master.zip /tmp/chinchilla-master.zip
+RUN cd /tmp && unzip chinchilla-master.zip && chmod 755 chinchilla-master && mv chinchilla-master /bin/chinchilla
 
 ADD configure-chinchilla.sh /tmp/configure-chinchilla.sh
 
@@ -70,6 +83,7 @@ EXPOSE 80
 EXPOSE 3306
 EXPOSE 8500
 EXPOSE 15672
+EXPOSE 5672
 
 CMD ["/usr/local/bin/run.sh"]
 
