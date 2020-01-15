@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 
 # Ensure UTF-8
-RUN apt-get clean && apt-get update && apt-get install -y locales
+RUN apt-get clean && apt-get update --fix-missing && apt-get install -y locales
 RUN locale-gen en_US.UTF-8
 ENV LANG       en_US.UTF-8
 ENV LC_ALL     en_US.UTF-8
@@ -18,6 +18,8 @@ RUN apt-get update
 
 RUN apt-get install -y php5.6
 
+RUN add-apt-repository 'deb http://archive.ubuntu.com/ubuntu trusty universe'
+RUN apt-get update
 RUN apt-get install -y \
 	php5.6-cli php5.6-fpm php5.6-mysql php5.6-pgsql php5.6-sqlite php5.6-curl \
 	php5.6-gd php5.6-mcrypt php5.6-intl php5.6-imap php5.6-tidy php5.6-memcache \
@@ -25,8 +27,9 @@ RUN apt-get install -y \
 RUN apt-get install -y \
 	nginx \
 	memcached \
-	mysql-server mysql-client \
-	supervisor
+	mysql-server-5.6 mysql-client-5.6 \
+	supervisor \
+	less
 
 RUN sed -i "s/;date.timezone =.*/date.timezone = UTC/" /etc/php/5.6/fpm/php.ini
 RUN sed -i "s/;date.timezone =.*/date.timezone = UTC/" /etc/php/5.6/cli/php.ini
@@ -44,13 +47,33 @@ ADD nginx-site   /etc/nginx/sites-available/default
 RUN ln -sf /dev/stdout /var/log/nginx/access.log
 RUN ln -sf /dev/stdout /var/log/nginx/error.log
 
-# RUN touch -c -a {}
-# RUN service mysql start
+# mysql
+RUN apt-get clean
+#RUN chmod 777 /var/run/mysqld/mysqld.sock
+RUN ls /var/run/
+RUN chown -R mysql:mysql /var/lib/mysql /usr/sbin/mysqld /usr/bin/mysql /var/run/mysqld
+RUN chgrp -R mysql /var/lib/mysql /usr/bin/mysql /var/run/mysqld
+RUN find /var/lib/mysql -type f -exec touch {} +
+RUN find /usr/sbin/mysqld -type f -exec touch {} +
 
-# RUN /usr/sbin/mysqld & \
-# 	sleep 10s &&\
-# 	echo "GRANT ALL ON *.* TO admin@'%' IDENTIFIED BY 'changeme' WITH GRANT OPTION; FLUSH PRIVILEGES" | mysql
-# RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+
+RUN service mysql stop
+#RUN mkdir /var/run/mysqld
+RUN chown mysql:mysql /var/run/mysqld
+RUN /usr/sbin/mysqld --skip-grant-tables --skip-networking &
+
+#RUN service mysql restart
+#; exit 0
+
+RUN less /var/log/mysql/error.log
+
+RUN /usr/sbin/mysqld --user=root & \
+	sleep 10s &&\
+	echo "GRANT ALL ON *.* TO admin@'%' IDENTIFIED BY 'changeme' WITH GRANT OPTION; FLUSH PRIVILEGES" | mysql
+
+RUN cp /etc/mysql/my.cnf /usr/share/mysql/my-default.cnf
+RUN sed -i -e "s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+
 
 # consul
 RUN apt-get install -y unzip
